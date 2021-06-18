@@ -75,14 +75,34 @@ import render from "./render";
 
 // const elementVNode = h(MyComponent); // 传入的tag为类组件MyComponent，属于函数，则创建vue3的类组件
 
-const elementVNode = h(MyFunctionalComponent) // 函数式组件
+// const elementVNode = h(MyFunctionalComponent) // 函数式组件
+
+const elementVNode = h("div", {
+  style: {
+    height: "200px",
+    background: "red",
+  },
+  class: ["cla-a"],
+  onclick:handler
+});
+
+setTimeout(() => {
+  const elementVNode = h("div", {
+    style: {
+      width: "100px",
+      border: "1px solid green",
+    },
+    id: "hahah",
+  });
+
+  render(elementVNode, document.getElementById("app"));
+}, 3000);
 
 render(elementVNode, document.getElementById("app"));
 
 function handler() {
   alert("click me");
 }
-
 
 // data、props、ref 或者 slots 等等是为render函数生成VNode的过程中提供数据的来源
 // 而组件产出VNode才是核心

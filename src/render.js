@@ -46,11 +46,13 @@ function mount(vnode, container, isSVG) {
 
 const domPropsRE = /\[A-Z]|^(?:value|checked|selected|muted)$/;
 function mountElement(vnode, container, isSVG) {
+  // 创建标签
   isSVG = isSVG || vnode.flags & VNodeFlags.ELEMENT_SVG; // 严谨地处理 SVG 标签
   const el = isSVG
     ? document.createElementNS("http://www.w3.org/2000/svg", vnode.tag)
     : document.createElement(vnode.tag);
   vnode.el = el;
+  // 处理data
   const data = vnode.data;
   if (data) {
     for (let key in data) {
@@ -61,7 +63,11 @@ function mountElement(vnode, container, isSVG) {
           }
           break;
         case "class":
-          el.className = data[key];
+          if (isSVG) {
+            el.setAttribute("class", data[key]);
+          } else {
+            el.className = data[key];
+          }
           break;
         default:
           if (key[0] === "o" && key[1] === "n") {
@@ -78,7 +84,7 @@ function mountElement(vnode, container, isSVG) {
       }
     }
   }
-
+  // 处理children
   const childFlags = vnode.childFlags;
   const children = vnode.children;
   if (childFlags !== ChildrenFlags.NO_CHILDREN) {
@@ -173,4 +179,111 @@ function mountFunctionalComponent(vnode, container, isSVG) {
   mount($vnode, container, isSVG);
   // el 元素引用该组件的根元素
   vnode.el = $vnode.el;
+}
+
+function patch(prevVNode, nextVNode, container) {
+  const nextFlags = nextVNode.flags;
+  const prevFlags = prevVNode.flags;
+
+  // 比较新旧节点类型是否相同, 不同则直接替换
+  // 类型相同则根据不同类型调用不同的比对函数
+  if (nextFlags !== prevFlags) {
+    replaceVNode(prevVNode, nextVNode, container);
+  } else if (nextFlags & VNodeFlags.ELEMENT) {
+    patchElement(prevVNode, nextVNode, container);
+  } else if (nextFlags & VNodeFlags.COMPONENT) {
+    patchComponent(prevVNode, nextVNode, container);
+  } else if (nextFlags & VNodeFlags.TEXT) {
+    patchText(prevVNode, nextVNode);
+  } else if (nextFlags & VNodeFlags.FRAGMENT) {
+    patchFragment(prevVNode, nextVNode, container);
+  } else if (nextFlags & VNodeFlags.PORTAL) {
+    patchPortal(prevVNode, nextVNode);
+  }
+}
+
+function replaceVNode(prevVNode, nextVNode, container) {
+  // 将旧的 VNode 所渲染的 DOM 从容器中移除
+  container.removeChild(prevVNode.el);
+  // 再把新的 VNode 挂载到容器中
+  mount(nextVNode, container);
+}
+
+function patchElement(prevVNode, nextVNode, container) {
+  // 有一些元素标签都不同，直接调用replaceVNode
+  if (prevVNode.tag !== nextVNode.tag) {
+    prevVNode, nextVNode, container;
+    return;
+  }
+  // 标签相同，则继续比较VNode.data VNode.children
+  const el = (nextVNode.el = prevVNode.el);
+  const prevData = prevVNode.data;
+  const nextData = nextVNode.data;
+
+  // 比较新旧节点的data
+  if (nextData) {
+    // 遍历新vnode，添加新属性，修改旧属性
+    for (let key in nextData) {
+      const prevValue = prevData[key];
+      const nextValue = nextData[key];
+      patchData(el, key, prevValue, nextValue);
+    }
+  }
+  if (prevData) {
+    // 遍历旧vnode的data，去除新vnode中不存在但旧vnode存在的属性
+    for (let key in prevData) {
+      const prevValue = prevData[key];
+      if (prevValue && !nextData.hasOwnProperty(key)) {
+        patchData(el, key, prevValue, null);
+      }
+    }
+  }
+
+  // 比较新旧节点的children，递归地更新子节点
+  patchChildren(
+    prevVNode.childFlags, // 旧的 VNode 子节点的类型
+    nextVNode.childFlags, // 新的 VNode 子节点的类型
+    prevVNode.children, // 旧的 VNode 子节点
+    nextVNode.children, // 新的 VNode 子节点
+    el // 当前标签元素，即这些子节点的父节点
+  );
+}
+
+function patchData(el, key, prevValue, nextValue) {
+  switch (key) {
+    case "style":
+      for (let k in nextValue) {
+        el.style[k] = nextValue[k];
+      }
+      for (let k in prevValue) {
+        if (!nextValue.hasOwnProperty(k)) {
+          el.style[k] = "";
+        }
+      }
+      break;
+    case "class":
+      el.className = nextValue ?? "";
+      break;
+    default:
+      if (key[0] === "o" && key[1] === "n") {
+        // 事件
+        if (prevValue) {
+          el.removeEventListener(key.slice(2), prevValue);
+        }
+        if (nextValue) {
+          el.addEventListener(key.slice(2), nextValue);
+        }
+      } else if (domPropsRE.test(key)) {
+        // DOM Prop
+        el[key] = nextValue;
+      } else {
+        // DOM Attr
+        el.setAttribute(key, nextValue);
+      }
+      break;
+  }
+}
+
+function patchChildren(){
+  console.log('哎哟不错')
 }
