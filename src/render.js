@@ -291,6 +291,7 @@ function patchChildren(
   nextChildren,
   container
 ) {
+  console.log("container", container);
   switch (prevChildFlags) {
     case ChildrenFlags.SINGLE_VNODE:
       switch (nextChildFlags) {
@@ -340,6 +341,7 @@ function patchChildren(
         default:
           // 核心：Diff算法，新旧节点的子节点都是多个子节点时
           // 若采用将旧节点全移除，新节点全添加，就没有复用可言
+          console.log("container", container);
           for (let i = 0; i < prevChildren.length; i++) {
             container.removeChild(prevChildren[i].el);
           }
@@ -379,5 +381,37 @@ function patchFragment(prevVNode, nextVNode, container) {
     default:
       nextVNode.el = nextVNode.children[0].el;
       break;
+  }
+}
+
+function patchPortal(prevVNode, nextVNode) {
+  // 先更新children，暂时让挂载目标不变
+  patchChildren(
+    prevVNode.childFlags, // 旧片段的子节点类型
+    nextVNode.childFlags, // 新片段的子节点类型
+    prevVNode.children, // 旧片段的子节点
+    nextVNode.children, // 新片段的子节点
+    prevVNode.tag
+  );
+  nextVNode.el = prevVNode.el; // 对应的真实占位文本节点不变
+
+  // 新旧容器的挂载点不同，才搬运
+  if (prevVNode.tag !== nextVNode.tag) {
+    const container =
+      typeof nextVNode.tag === "string"
+        ? document.querySelector(nextVNode.tag)
+        : nextVNode.tag;
+    switch (nextVNode.childFlags) {
+      case ChildrenFlags.SINGLE_VNODE:
+        container.appendChild(nextVNode.children.el);
+        break;
+      case ChildrenFlags.NO_CHILDREN:
+        break;
+      default:
+        for (let i = 0; i < nextVNode.children.length; i++) {
+          container.appendChild(nextVNode.children[i].el);
+        }
+        break;
+    }
   }
 }
