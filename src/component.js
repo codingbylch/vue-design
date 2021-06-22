@@ -40,6 +40,12 @@ export class ParentComponent {
     });
     return childCompVNode;
   }
+  mounted() {
+    setTimeout(() => {
+      this.localState = "父组件数据进行更新";
+      this._update();
+    }, 2000);
+  }
 }
 
 export class ChildComponent {

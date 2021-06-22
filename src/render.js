@@ -163,7 +163,8 @@ function mountComponent(vnode, container, isSVG) {
 
 function mountStatefulComponent(vnode, container, isSVG) {
   // 创建组件实例
-  const instance = new vnode.tag(); // tag是传入的函数，即组件类的引用MyComponent，new调用则生成一个实例
+  // const instance = new vnode.tag(); // tag是传入的函数，即组件类的引用MyComponent，new调用则生成一个实例
+  const instance = (vnode.children = new vnode.tag()); // vnode.children变量引用组件实例，便于后续的使用
   instance.$props = vnode.data; // 初始化组件的props
   instance._update = function () {
     // 设计一个 boolean 类型的状态标识，用来标记组件是否已经被挂载
@@ -228,6 +229,14 @@ function patch(prevVNode, nextVNode, container) {
 function replaceVNode(prevVNode, nextVNode, container) {
   // 将旧的 VNode 所渲染的 DOM 从容器中移除
   container.removeChild(prevVNode.el);
+
+  // 如果将要被移除的 VNode 类型是组件，则需要调用该组件实例的 unmounted 钩子函数
+  if (prevVNode.flags & VNodeFlags.COMPONENT_STATEFUL_NORMAL) {
+    // 类型为有状态组件的 VNode，其 children 属性被用来存储组件实例对象
+    const instance = prevVNode.children;
+    instance.unmounted && instance.unmounted();
+  }
+
   // 再把新的 VNode 挂载到容器中
   mount(nextVNode, container);
 }
@@ -436,5 +445,16 @@ function patchPortal(prevVNode, nextVNode) {
         }
         break;
     }
+  }
+}
+
+function patchComponent(prevVNode, nextVNode, container) {
+  if (nextVNode.tag !== prevVNode.tag) { // 前后渲染不同的子组件
+    // 组件实例是不同的，因此调用replaceVNode
+    replaceVNode(prevVNode, nextVNode, container);
+  } else if (nextVNode.flags & VNodeFlags.COMPONENT_STATEFUL_NORMAL) { // props的更新
+    const instance = (nextVNode.children = prevVNode.children); // 从属性children中获取组件实例，之前在moutStatefulComoponent中有设置
+    instance.$props = nextVNode.data;
+    instance._update();
   }
 }

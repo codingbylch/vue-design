@@ -105,6 +105,42 @@ import {
 // }, 2000)
 
 // const elementVNode = h(MyComponent);
-const elementVNode = h(ParentComponent);
+// const elementVNode = h(ParentComponent);
+class ChildComponent_1 {
+  render() {
+    return h("div", null, "子组件1");
+  }
+  unmounted(){
+      console.log('c1')
+  }
+}
+
+class ChildComponent_2 {
+  render() {
+    return h("div", null, "子组件2");
+  }
+  unmounted(){
+    console.log('c2')
+}
+}
+class ParentComponent_1 {
+  isTrue = true;
+
+  render() {
+    return this.isTrue ? h(ChildComponent_1) : h(ChildComponent_2);
+  }
+  mounted() {
+    setTimeout(() => {
+      this.isTrue = false;
+      console.log('this.isTrue',this.isTrue)
+      this._update();
+    }, 2000);
+  }
+  unmounted(){
+    console.log('p1')
+}
+}
+
+const elementVNode = h(ParentComponent_1);
 
 render(elementVNode, document.getElementById("app"));
