@@ -239,7 +239,7 @@ function patchElement(prevVNode, nextVNode, container) {
     }
   }
 
-  // 比较新旧节点的children，递归地更新子节点
+  // 新旧节点的children同层级比较，递归地更新子节点
   patchChildren(
     prevVNode.childFlags, // 旧的 VNode 子节点的类型
     nextVNode.childFlags, // 新的 VNode 子节点的类型
@@ -284,6 +284,70 @@ function patchData(el, key, prevValue, nextValue) {
   }
 }
 
-function patchChildren(){
-  console.log('哎哟不错')
+function patchChildren(
+  prevChildFlags,
+  nextChildFlags,
+  prevChildren,
+  nextChildren,
+  container
+) {
+  switch (prevChildFlags) {
+    case ChildrenFlags.SINGLE_VNODE:
+      switch (nextChildFlags) {
+        case ChildrenFlags.SINGLE_VNODE:
+          patch(prevChildren, nextChildren, container);
+          break;
+        case ChildrenFlags.NO_CHILDREN:
+          container.removeChild(prevChildren.el);
+          break;
+        default:
+          container.removeChild(prevChildren.el);
+          for (let i = 0; i < nextChildren.length; i++) {
+            mount(nextChildren[i], container);
+          }
+          break;
+      }
+      break;
+
+    case ChildrenFlags.NO_CHILDREN:
+      switch (nextChildFlags) {
+        case ChildrenFlags.SINGLE_VNODE:
+          mount(nextChildren, container);
+          break;
+        case ChildrenFlags.NO_CHILDREN:
+          break;
+        default:
+          for (let i = 0; i < nextChildren.length; i++) {
+            mount(nextChildren[i], container);
+          }
+          break;
+      }
+      break;
+
+    default:
+      switch (nextChildFlags) {
+        case ChildrenFlags.SINGLE_VNODE:
+          for (let i = 0; i < prevChildren.length; i++) {
+            container.removeChild(prevChildren[i].el);
+          }
+          mount(nextChildren, container);
+          break;
+        case ChildrenFlags.NO_CHILDREN:
+          for (let i = 0; i < prevChildren.length; i++) {
+            container.removeChild(prevChildren[i].el);
+          }
+          break;
+        default:
+          // 核心：Diff算法，新旧节点的子节点都是多个子节点时
+          // 若采用将旧节点全移除，新节点全添加，就没有复用可言
+          for (let i = 0; i < prevChildren.length; i++) {
+            container.removeChild(prevChildren[i].el);
+          }
+          for (let i = 0; i < nextChildren.length; i++) {
+            mount(nextChildren[i], container);
+          }
+          break;
+      }
+      break;
+  }
 }

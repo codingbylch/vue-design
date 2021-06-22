@@ -77,23 +77,35 @@ import render from "./render";
 
 // const elementVNode = h(MyFunctionalComponent) // 函数式组件
 
-const elementVNode = h("div", {
-  style: {
-    height: "200px",
-    background: "red",
+const elementVNode = h(
+  "div",
+  {
+    style: {
+      height: "200px",
+      background: "red",
+    },
+    class: ["cla-a"],
+    onclick: handler,
   },
-  class: ["cla-a"],
-  onclick:handler
-});
+  [h("p", null, "子节点 1"), h("p", null, "子节点 2")]
+);
 
 setTimeout(() => {
-  const elementVNode = h("div", {
-    style: {
-      width: "100px",
-      border: "1px solid green",
+  const elementVNode = h(
+    "div",
+    {
+      style: {
+        width: "100px",
+        border: "1px solid green",
+      },
+      id: "hahah",
     },
-    id: "hahah",
-  });
+    [
+      h("p", null, "子节点 1"),
+      h("p", null, "子节点 2"),
+      h("p", null, "子节点 3"),
+    ]
+  );
 
   render(elementVNode, document.getElementById("app"));
 }, 3000);
