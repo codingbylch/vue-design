@@ -1,5 +1,10 @@
 import { h, Fragment, Portal } from "./h";
 import render from "./render";
+import {
+  MyComponent,
+  MyFunctionalComponent,
+  ParentComponent,
+} from "./component";
 
 // const elementVNode = h( // 新旧节点的子节点都为多个子节点时
 //   "div",
@@ -78,23 +83,28 @@ import render from "./render";
 
 // render(elementVNode, document.getElementById("app"));
 
-// 旧的 VNode
-const prevVNode = h(
-  Portal,
-  { target: '#old-container' },
-  h('p', null, '旧的 Portal')
-)
+// // 旧的 VNode
+// const prevVNode = h(
+//   Portal,
+//   { target: '#old-container' },
+//   h('p', null, '旧的 Portal')
+// )
 
-// 新的 VNode
-const nextVNode = h(
-  Portal,
-  { target: '#new-container' },
-  h('p', null, '新的 Portal')
-)
+// // 新的 VNode
+// const nextVNode = h(
+//   Portal,
+//   { target: '#new-container' },
+//   h('p', null, '新的 Portal')
+// )
 
-render(prevVNode, document.getElementById('app'))
+// render(prevVNode, document.getElementById('app'))
 
-// 2秒后更新
-setTimeout(() => {
-  render(nextVNode, document.getElementById('app'))
-}, 2000)
+// // 2秒后更新
+// setTimeout(() => {
+//   render(nextVNode, document.getElementById('app'))
+// }, 2000)
+
+// const elementVNode = h(MyComponent);
+const elementVNode = h(ParentComponent);
+
+render(elementVNode, document.getElementById("app"));

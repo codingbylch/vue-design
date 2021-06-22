@@ -164,12 +164,35 @@ function mountComponent(vnode, container, isSVG) {
 function mountStatefulComponent(vnode, container, isSVG) {
   // 创建组件实例
   const instance = new vnode.tag(); // tag是传入的函数，即组件类的引用MyComponent，new调用则生成一个实例
-  // 渲染VNode
-  instance.$vnode = instance.render(); // 此render是组件里的render方法，返回vnode
-  // 挂载
-  mount(instance.$vnode, container, isSVG);
-  // el 属性值 和 组件实例的 $el 属性都引用组件的根DOM元素
-  instance.$el = vnode.el = instance.$vnode.el;
+  instance.$props = vnode.data; // 初始化组件的props
+  instance._update = function () {
+    // 设计一个 boolean 类型的状态标识，用来标记组件是否已经被挂载
+    // 如果 instance._mounted 为真，说明组件已挂载，应该执行更新操作
+    if (instance._mounted) {
+      // 1.拿到旧的Vnode
+      const prevVNode = instance.$vnode;
+      // 2.重新渲染新的VNode
+      const nextVNode = (instance.$vnode = instance.render());
+      // 3.patch更新
+      patch(prevVNode, nextVNode, prevVNode.el.parentNode);
+      // 4.更新vnode.el和$el
+      instance.$el = vnode.el = instance.$vnode.el;
+    } else {
+      // 否则执行初次的挂载操作
+      // 1.渲染VNode
+      instance.$vnode = instance.render(); // 此render是组件里的render方法，返回vnode
+      // 2.挂载
+      mount(instance.$vnode, container, isSVG);
+      // 3.组件已挂载标识
+      instance._mounted = true;
+      // 4.el 属性值 和 组件实例的 $el 属性都引用组件的根DOM元素
+      instance.$el = vnode.el = instance.$vnode.el;
+      // 5.调用mounted 钩子
+      instance.mounted && instance.mounted();
+    }
+  };
+
+  instance._update();
 }
 
 function mountFunctionalComponent(vnode, container, isSVG) {
