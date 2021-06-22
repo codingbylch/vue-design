@@ -83,6 +83,8 @@ import {
 
 // render(elementVNode, document.getElementById("app"));
 
+// ---------------------------------------------------
+
 // // 旧的 VNode
 // const prevVNode = h(
 //   Portal,
@@ -106,41 +108,69 @@ import {
 
 // const elementVNode = h(MyComponent);
 // const elementVNode = h(ParentComponent);
-class ChildComponent_1 {
-  render() {
-    return h("div", null, "子组件1");
-  }
-  unmounted(){
-      console.log('c1')
-  }
+
+// ---------------------------------------------------
+
+// class ChildComponent_1 {
+//   render() {
+//     return h("div", null, "子组件1");
+//   }
+//   unmounted() {
+//     console.log("c1");
+//   }
+// }
+
+// class ChildComponent_2 {
+//   render() {
+//     return h("div", null, "子组件2");
+//   }
+//   unmounted() {
+//     console.log("c2");
+//   }
+// }
+// class ParentComponent_1 {
+//   isTrue = true;
+
+//   render() {
+//     return this.isTrue ? h(ChildComponent_1) : h(ChildComponent_2);
+//   }
+//   mounted() {
+//     setTimeout(() => {
+//       this.isTrue = false;
+//       console.log("this.isTrue", this.isTrue);
+//       this._update();
+//     }, 2000);
+//   }
+//   unmounted() {
+//     console.log("p1");
+//   }
+// }
+
+// const elementVNode = h(ParentComponent_1);
+
+// render(elementVNode, document.getElementById("app"));
+
+// ---------------------------------------------------
+
+function MyFunctionalComp(props) {
+  return h("div", null, props.text);
 }
 
-class ChildComponent_2 {
-  render() {
-    return h("div", null, "子组件2");
-  }
-  unmounted(){
-    console.log('c2')
-}
-}
-class ParentComponent_1 {
-  isTrue = true;
+class ParentComponent_3 {
+  localState = "one";
 
-  render() {
-    return this.isTrue ? h(ChildComponent_1) : h(ChildComponent_2);
-  }
   mounted() {
     setTimeout(() => {
-      this.isTrue = false;
-      console.log('this.isTrue',this.isTrue)
+      this.localState = "two";
       this._update();
     }, 2000);
   }
-  unmounted(){
-    console.log('p1')
+  render() {
+    return h(MyFunctionalComp, {
+      text: this.localState,
+    });
+  }
 }
-}
-
-const elementVNode = h(ParentComponent_1);
-
-render(elementVNode, document.getElementById("app"));
+// 有状态组件 VNode
+const compVNode = h(ParentComponent_3);
+render(compVNode, document.getElementById("app"));
