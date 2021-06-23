@@ -24,11 +24,11 @@ export default function render(vnode, container) {
   }
 }
 
-function mount(vnode, container, isSVG) {
+function mount(vnode, container, isSVG, refNode) {
   const { flags } = vnode;
   if (flags & VNodeFlags.ELEMENT) {
     // 挂载普通标签
-    mountElement(vnode, container, isSVG);
+    mountElement(vnode, container, isSVG, refNode);
   } else if (flags & VNodeFlags.COMPONENT) {
     // 挂载组件
     mountComponent(vnode, container, isSVG);
@@ -45,7 +45,7 @@ function mount(vnode, container, isSVG) {
 }
 
 const domPropsRE = /\[A-Z]|^(?:value|checked|selected|muted)$/;
-function mountElement(vnode, container, isSVG) {
+function mountElement(vnode, container, isSVG, refNode) {
   // 创建标签
   isSVG = isSVG || vnode.flags & VNodeFlags.ELEMENT_SVG; // 严谨地处理 SVG 标签
   const el = isSVG
@@ -98,7 +98,7 @@ function mountElement(vnode, container, isSVG) {
     }
   }
 
-  container.appendChild(el);
+  refNode ? container.insertBefore(el, refNode) : container.appendChild(el);
 }
 
 function mountText(vnode, container) {
@@ -402,20 +402,44 @@ function patchChildren(
         default:
           // 核心：Diff算法，新旧节点的子节点都是多个子节点时
           // 若采用将旧节点全移除，新节点全添加，就没有复用可言
-          // 以下即没有key时所采用的算法
-          const prevLen = prevChildren.length;
-          const nextLen = nextChildren.length;
-          const commonLength = prevLen > nextLen ? nextLen : prevLen;
-          for (let i = 0; i < commonLength; i++) {
-            patch(prevChildren[i], nextChildren[i], container);
-          }
-          if (prevLen > nextLen) {
-            for (let i = commonLength; i < prevLen; i++) {
-              container.removeChild(prevChildren[i]);
+          let lastIndex = 0;
+          for (let i = 0; i < nextChildren.length; i++) {
+            const nextVNode = nextChildren[i];
+            let find = false;
+            for (let j = 0; j < prevChildren.length; j++) {
+              const prevVNode = prevChildren[j];
+              if (nextVNode.key === prevVNode.key) {
+                find = true;
+                patch(prevVNode, nextVNode, container);
+                if (j < lastIndex) {
+                  // 移动
+                  const refNode = nextChildren[i - 1].el.nextSibling;
+                  container.insertBefore(prevVNode.el, refNode);
+                } else {
+                  lastIndex = j;
+                }
+                break;
+              }
             }
-          } else {
-            for (let i = commonLength; i < nextLen; i++) {
-              mount(nextChildren[i], container);
+            if (!find) {
+              // 挂载新节点
+              // 找到refNode
+              const refNode =
+                i - 1 < 0
+                  ? prevChildren[0].el
+                  : nextChildren[i - 1].el.nextSibling;
+              mount(nextVNode, container, false, refNode);
+            }
+          }
+
+          // 移除已经不存在的节点
+          for (let i = 0; i < prevChildren.length; i++) {
+            const prevVNode = prevChildren[i];
+            const has = nextChildren.find(
+              (nextVNode) => nextVNode.key === prevVNode.key
+            );
+            if (!has) {
+              container.removeChild(prevVNode.el);
             }
           }
 

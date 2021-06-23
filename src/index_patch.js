@@ -178,18 +178,19 @@ import {
 // ---------------------------------------------------
 
 const elementVNode = h("ul", null, [
-  h("li", null, 1),
-  h("li", null, 2),
-  h("li", null, 3),
+  h("li", { key: "a" }, 1),
+  h("li", { key: "b" }, 2),
+  h("li", { key: "c" }, 3),
 ]);
 
 render(elementVNode, document.getElementById("app"));
 
 setTimeout(() => {
   const elementVNode = h("ul", null, [
-    h("li", null, 3),
-    h("li", null, 1),
-    h("li", null, 2),
+    h("li", { key: "d" }, 4),
+    h("li", { key: "c" }, 3),
+    // h("li", { key: "a" }, 1),
+    h("li", { key: "b" }, 2),
   ]);
   render(elementVNode, document.getElementById("app"));
 }, 2000);
