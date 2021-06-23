@@ -402,13 +402,23 @@ function patchChildren(
         default:
           // 核心：Diff算法，新旧节点的子节点都是多个子节点时
           // 若采用将旧节点全移除，新节点全添加，就没有复用可言
-          console.log("container", container);
-          for (let i = 0; i < prevChildren.length; i++) {
-            container.removeChild(prevChildren[i].el);
+          // 以下即没有key时所采用的算法
+          const prevLen = prevChildren.length;
+          const nextLen = nextChildren.length;
+          const commonLength = prevLen > nextLen ? nextLen : prevLen;
+          for (let i = 0; i < commonLength; i++) {
+            patch(prevChildren[i], nextChildren[i], container);
           }
-          for (let i = 0; i < nextChildren.length; i++) {
-            mount(nextChildren[i], container);
+          if (prevLen > nextLen) {
+            for (let i = commonLength; i < prevLen; i++) {
+              container.removeChild(prevChildren[i]);
+            }
+          } else {
+            for (let i = commonLength; i < nextLen; i++) {
+              mount(nextChildren[i], container);
+            }
           }
+
           break;
       }
       break;
